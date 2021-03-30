@@ -1,0 +1,7 @@
+When adding a new block you must:
+1) Register it in the ModBlocks.java
+2) Add a .json to blockstates
+3) Add a name to en_us.json
+4) Add a .json to block
+5) Add a .json to item
+6) Add textures to block

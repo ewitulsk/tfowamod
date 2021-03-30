@@ -17,8 +17,11 @@ public class ModBlocks
     public static final RegistryObject<Block> BOOB_BLOCK = register("boob_block",
             () -> new Block(AbstractBlock.Properties.create(Material.IRON).hardnessAndResistance(3f, 10f).sound(SoundType.SLIME)));
 
-    public static final RegistryObject<Block> B_Ore = register("boob_ore",
+    public static final RegistryObject<Block> B_Ore = register("b_ore",
             () -> new Block(AbstractBlock.Properties.create(Material.IRON).hardnessAndResistance(3f, 10f).sound(SoundType.STONE)));
+
+    public static final RegistryObject<Block> GAS_BLOCK = register("gas_block",
+            () -> new Block(AbstractBlock.Properties.create(Material.GLASS).hardnessAndResistance(3600000f, 10f).sound(SoundType.GLASS)));
 
     public static void register() { }
 

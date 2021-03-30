@@ -1,5 +1,7 @@
 {
   "item.tfowamod.boob_ingot": "Boob Ingot",
-  "block.tfowamod.boob_block" : "Boob Block"
+  "block.tfowamod.boob_block" : "Boob Block",
+  "block.tfowamod.b_ore" : "Boob Ore",
+  "block.tfowamod.gas_block" : "Gas Block"
 
 }
