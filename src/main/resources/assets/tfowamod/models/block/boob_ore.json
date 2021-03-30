@@ -1,0 +1,79 @@
+{
+    "__comment": "Model generated using MrCrayfish's Model Creator (https://mrcrayfish.com/tools?id=mc)",
+    "textures": {
+        "big_nip": "tfowamod:block/big_nip",
+        "little_nip": "tfowamod:block/little_nip",
+        "boob_block_base": "tfowamod:block/boob_block_base"
+    },
+    "display": {
+        "gui": {
+            "rotation": [ 30, 45, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.625, 0.625, 0.625 ]
+        },
+        "ground": {
+            "rotation": [ 0, 0, 0 ],
+            "translation": [ 0, 3, 0 ],
+            "scale": [ 0.25, 0.25, 0.25 ]
+        },
+        "fixed": {
+            "rotation": [ 0, 180, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 1, 1, 1 ]
+        },
+        "head": {
+            "rotation": [ 0, 180, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 1, 1, 1 ]
+        },
+        "firstperson_righthand": {
+            "rotation": [ 0, 315, 0 ],
+            "translation": [ 0, 2.5, 0 ],
+            "scale": [ 0.4, 0.4, 0.4 ]
+        },
+        "thirdperson_righthand": {
+            "rotation": [ 75, 315, 0 ],
+            "translation": [ 0, 2.5, 0 ],
+            "scale": [ 0.375, 0.375, 0.375 ]
+        }
+    },
+    "elements": [
+        {
+            "name": "Base",
+            "from": [ 0, 0, 3 ], 
+            "to": [ 16, 16, 16 ], 
+            "faces": {
+                "north": { "texture": "#boob_block_base", "uv": [ 0, 0, 16, 16 ] },
+                "east": { "texture": "#boob_block_base", "uv": [ 0, 0, 13, 16 ] },
+                "south": { "texture": "#boob_block_base", "uv": [ 0, 0, 16, 16 ] },
+                "west": { "texture": "#boob_block_base", "uv": [ 0, 0, 13, 16 ] },
+                "up": { "texture": "#boob_block_base", "uv": [ 0, 0, 16, 13 ] },
+                "down": { "texture": "#boob_block_base", "uv": [ 0, 0, 16, 13 ] }
+            }
+        },
+        {
+            "name": "Big Nip",
+            "from": [ 5, 5, 1 ], 
+            "to": [ 11, 11, 3 ], 
+            "faces": {
+                "north": { "texture": "#big_nip", "uv": [ 0, 0, 6, 6 ] },
+                "east": { "texture": "#big_nip", "uv": [ 0, 0, 2, 6 ] },
+                "west": { "texture": "#big_nip", "uv": [ 0, 0, 2, 6 ] },
+                "up": { "texture": "#big_nip", "uv": [ 0, 0, 6, 2 ] },
+                "down": { "texture": "#big_nip", "uv": [ 0, 0, 6, 2 ] }
+            }
+        },
+        {
+            "name": "Little Nip",
+            "from": [ 7, 7, 0 ], 
+            "to": [ 9, 9, 1 ], 
+            "faces": {
+                "north": { "texture": "#little_nip", "uv": [ 0, 0, 2, 2 ] },
+                "east": { "texture": "#little_nip", "uv": [ 0, 0, 1, 2 ] },
+                "west": { "texture": "#little_nip", "uv": [ 0, 0, 1, 2 ] },
+                "up": { "texture": "#little_nip", "uv": [ 0, 0, 2, 1 ] },
+                "down": { "texture": "#little_nip", "uv": [ 0, 0, 2, 1 ] }
+            }
+        }
+    ]
+}
