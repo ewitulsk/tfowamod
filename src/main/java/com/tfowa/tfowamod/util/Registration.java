@@ -16,7 +16,7 @@ public class Registration
     public static final DeferredRegister<Item> ITEMS =
             DeferredRegister.create(ForgeRegistries.ITEMS, TFOWAMod.MOD_ID);
 
-    public static void register(){
+    public static void init(){
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
         BLOCKS.register(eventBus);
         ITEMS.register(eventBus);
