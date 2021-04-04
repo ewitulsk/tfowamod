@@ -3,6 +3,7 @@ package com.tfowa.tfowamod.block;
 import com.tfowa.tfowamod.util.Registration;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.BlockItem;
@@ -12,7 +13,7 @@ import net.minecraftforge.fml.RegistryObject;
 
 import java.util.function.Supplier;
 
-public class ModBlocks
+public class ModBlocks extends Blocks
 {
     public static final RegistryObject<Block> BOOB_BLOCK = register("boob_block",
             Boob_Block::new);
