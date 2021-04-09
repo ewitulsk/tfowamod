@@ -4,12 +4,11 @@ import com.google.common.base.Objects;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.tfowa.tfowamod.TFOWAMod;
-import com.tfowa.tfowamod.block.Gas_Block;
 
 import com.tfowa.tfowamod.block.ModBlocks;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.material.Material;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.PlayerEntity;
@@ -21,7 +20,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 
@@ -51,9 +49,10 @@ class Pt{
     }
 }
 
-class BorderSide{
+//Formerlly BorderSide
+class Line {
     Pt corner1, corner2;
-    public BorderSide(Pt corner1, Pt corner2){
+    public Line(Pt corner1, Pt corner2){
         this.corner1 = corner1;
         this.corner2 = corner2;
     }
@@ -62,7 +61,7 @@ class BorderSide{
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        BorderSide that = (BorderSide) o;
+        Line that = (Line) o;
         return Objects.equal(corner1, that.corner1) &&
                 Objects.equal(corner2, that.corner2);
     }
@@ -75,16 +74,15 @@ class BorderSide{
 }
 
 class Border{
-    public BorderSide top, bottom, left, right;
+    public Line top, bottom, left, right;
     Pt center;
     public int borderNumber;
     public int radius;
     public Pt ltCorner, rtCorner, rbCorner, lbCorner;
     public ArrayList<Pt> corners = new ArrayList<Pt>();
-    public Border(Pt center, int borderNumber, int radius){
+    public Border(Pt center, int radius){
         this.center = center;
-        this.borderNumber = borderNumber;
-        this.radius = this.borderNumber * radius;
+        this.radius = radius;
 
         this.ltCorner = new Pt(center.x - radius, center.y + radius);
         this.rtCorner = new Pt(center.x + radius, center.y + radius);
@@ -96,10 +94,10 @@ class Border{
         this.corners.add(rbCorner);
         this.corners.add(lbCorner);
 
-        this.top = new BorderSide(this.ltCorner, this.rtCorner);
-        this.bottom = new BorderSide(this.lbCorner, this.rbCorner);
-        this.left = new BorderSide(this.ltCorner, this.lbCorner);
-        this.right = new BorderSide(this.rtCorner, this.rbCorner);
+        this.top = new Line(this.ltCorner, this.rtCorner);
+        this.bottom = new Line(this.lbCorner, this.rbCorner);
+        this.left = new Line(this.ltCorner, this.lbCorner);
+        this.right = new Line(this.rtCorner, this.rbCorner);
     }
 
 
@@ -179,14 +177,35 @@ class BorderHandler{
     public static boolean rOn = false;
     public static boolean lOn = false;
 
-    public static Border mainBorder;
+    public static Border mainBorder = new Border(new Pt(0, 0), 10);
 
-    public BorderHandler(Pt center, int borderNumber, int radius){
-        mainBorder = new Border(center, borderNumber, radius);
-    }
+    /*
+    public static Border makeNewBorder(double decreasePercent){
+        Random r = new Random();
+
+        Line tempLine;
+        int tempRad = (int) (mainBorder.radius * decreasePercent);
+        Border tempBorder = new Border(mainBorder.center, tempRad);
+
+        //Pick random side of temp border
+        int side = r.nextInt(4 );
+        if (side == 0){
+            tempLine = mainBorder.top;
+        } else if (side == 1){
+            tempLine = mainBorder.right;
+        } else if (side == 2){
+            tempLine = mainBorder.bottom;
+        }else if (side == 3){
+            tempLine = mainBorder.left;
+        }
+
+
+
+    }*/
+
 
     //Close seconds is an integer amount of time for the Border to close in Seconds
-    public static void calcTickRates(Border mainBorder, Border newBorder, int closeSeconds){
+    public static void calcTickRates(Border newBorder, int closeSeconds){
         //Top
         double mainTop = mainBorder.top.corner1.y;
         double newTop = newBorder.top.corner1.y;
@@ -211,77 +230,7 @@ class BorderHandler{
 
     }
 
-    public static int drawCorners(World world){
-        ArrayList corners = mainBorder.corners;
-        for(int i = 0; i<corners.size(); i++){
-            //System.out.println("Building Corner");
-            Pt corner = (Pt) corners.get(i);
-            GasBorder.spawnGasTower(world, new BlockPos(((int)corner.x), 0, ((int)corner.y)));
-        }
-        return 0;
-    }
 
-    public static int drawWall(World world){
-        try {
-            ArrayList corners = mainBorder.corners;
-            Pt ltCorner = (Pt) corners.get(0);
-            Pt rtCorner = (Pt) corners.get(1);
-            Pt rbCorner = (Pt) corners.get(2);
-            Pt lbCorner = (Pt) corners.get(3);
-            Pt finCorner = new Pt(ltCorner.x, ltCorner.y);
-
-            System.out.println("First Wall");
-            Pt curPt = ltCorner;
-            BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
-            while(!curPt.equals(rtCorner)){
-                System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
-                System.out.println("ltCorner: "+ ltCorner.x + ", "+ltCorner.y);
-                System.out.println("finCorner: "+finCorner.x + ", " + finCorner.y);
-                GasBorder.spawnGasTower(world, curPos);
-                //Increment curPos.x and curPt.x
-                curPos = curPos.add(1,0,0);
-                curPt.x += 1;
-            }
-
-            System.out.println("Second Wall");
-            curPt = rtCorner;
-            curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
-            while(!curPt.equals(rbCorner)){
-                System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
-                GasBorder.spawnGasTower(world, curPos);
-                //Decrement curPos.y and curPt.y
-                curPos = curPos.add(0,0,-1);
-                curPt.y -= 1;
-            }
-
-            System.out.println("Third Wall");
-            curPt = rbCorner;
-            curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
-            while(!curPt.equals(lbCorner)){
-                System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
-                GasBorder.spawnGasTower(world, curPos);
-                //Decrement curPos.x and curPt.x
-                curPos = curPos.add(-1,0,0);
-                curPt.x -= 1;
-            }
-
-            System.out.println("Forth Wall");
-            curPt = lbCorner;
-            curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
-            while(!curPt.equals(finCorner)){
-                System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
-                GasBorder.spawnGasTower(world, curPos);
-                //Increment curPos.y and curPt.y
-                curPos = curPos.add(0,0,1);
-                curPt.y += 1;
-            }
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-
-
-        return 0;
-    }
 
     @SubscribeEvent
     public static void shrinkTopEdge(TickEvent.ServerTickEvent event){
@@ -324,27 +273,11 @@ class BorderHandler{
     }
 
 
+
 }
 
 @Mod.EventBusSubscriber(modid = TFOWAMod.MOD_ID)
 public class GasBorder {
-
-    public static int spawnGasBlock(World world, BlockPos pos){
-        world.setBlockState(pos, ModBlocks.GAS_BLOCK.get().getDefaultState());
-        return 0;
-    }
-
-    public static int spawnGasTower(World world, BlockPos pos){
-        int y = 0;
-        while(y<255){
-            //System.out.println(y);
-            //System.out.println(pos.getY());
-            world.setBlockState(pos, ModBlocks.GAS_BLOCK.get().getDefaultState());
-            pos = pos.add(0, 1, 0);
-            y+=1;
-        }
-        return 0;
-    }
 
     public static boolean doPlayerDamage = false;
 
@@ -380,6 +313,7 @@ public class GasBorder {
             }
         }).executes(command -> enableDisableDamage(0)));
 
+        /*
         d.register(Commands.literal("placeBlock").requires(source -> {
             try{
                 return source.asPlayer() != null;
@@ -394,7 +328,7 @@ public class GasBorder {
             } catch (CommandSyntaxException e) {
                 return false;
             }
-        }).executes(command -> spawnGasTower(command.getSource().getWorld(), new BlockPos(command.getSource().getPos()))));
+        }).executes(command -> spawnGasTower(command.getSource().getWorld(), new BlockPos(command.getSource().getPos()))));*/
 
         d.register(Commands.literal("startGas").requires(source -> {
             try{
@@ -406,14 +340,21 @@ public class GasBorder {
 
 
         //New Border centered at 0,0 with Radius of 10
-        new BorderHandler(new Pt(0, 0), 1, 10);
         d.register(Commands.literal("newBorder").requires(source -> {
             try{
                 return source.asPlayer() != null;
             } catch (CommandSyntaxException e) {
                 return false;
             }
-        }).executes(command -> BorderHandler.drawWall(command.getSource().getWorld())));
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), ModBlocks.GAS_BLOCK.get().getDefaultState(), new Border(new Pt(0,0), 10))));
+
+        d.register(Commands.literal("clearBorder").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), Blocks.AIR.getDefaultState(), new Border(new Pt(0,0), 10))));
     }
 
     public static float GAS_DAMAGE_TO_PLAYER = 1f;
@@ -438,6 +379,102 @@ public class GasBorder {
                player.attackEntityFrom(gasDamageSource, GAS_DAMAGE_TO_PLAYER);
 
         }*/
+    }
+
+    public static void drawTop(World world, BlockState block, Pt ltCorner, Pt rtCorner){
+        //System.out.println("First Wall");
+        Pt curPt = ltCorner;
+        BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
+        while(!curPt.equals(rtCorner)){
+            //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
+            //System.out.println("ltCorner: "+ ltCorner.x + ", "+ltCorner.y);
+            //System.out.println("finCorner: "+finCorner.x + ", " + finCorner.y);
+            spawnGasTower(world, curPos, block);
+            //Increment curPos.x and curPt.x
+            curPos = curPos.add(1,0,0);
+            curPt.x += 1;
+        }
+    }
+
+    public static void drawRight(World world, BlockState block, Pt rtCorner, Pt rbCorner){
+        //System.out.println("Second Wall");
+        Pt curPt = rtCorner;
+        BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
+        while(!curPt.equals(rbCorner)){
+            //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
+            spawnGasTower(world, curPos, block);
+            //Decrement curPos.y and curPt.y
+            curPos = curPos.add(0,0,-1);
+            curPt.y -= 1;
+        }
+    }
+
+    public static void drawBottom(World world, BlockState block, Pt rbCorner, Pt lbCorner){
+        //System.out.println("Third Wall");
+        Pt curPt = rbCorner;
+        BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
+        while(!curPt.equals(lbCorner)){
+            //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
+            spawnGasTower(world, curPos, block);
+            //Decrement curPos.x and curPt.x
+            curPos = curPos.add(-1,0,0);
+            curPt.x -= 1;
+        }
+    }
+
+    public static void drawLeft(World world, BlockState block, Pt lbCorner, Pt finCorner){
+        //System.out.println("Forth Wall");
+        Pt curPt = lbCorner;
+        BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
+        while(!curPt.equals(finCorner)){
+            //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
+            spawnGasTower(world, curPos, block);
+            //Increment curPos.y and curPt.y
+            curPos = curPos.add(0,0,1);
+            curPt.y += 1;
+        }
+    }
+
+
+    public static int drawWall(World world, BlockState block, Border  border){
+        try {
+            ArrayList corners = border.corners;
+            Pt ltCorner = (Pt) corners.get(0);
+            Pt rtCorner = (Pt) corners.get(1);
+            Pt rbCorner = (Pt) corners.get(2);
+            Pt lbCorner = (Pt) corners.get(3);
+            Pt finCorner = new Pt(ltCorner.x, ltCorner.y);
+
+            drawTop(world, block, ltCorner, rtCorner);
+            drawRight(world, block, rtCorner, rbCorner);
+            drawBottom(world, block, rbCorner, lbCorner);
+            drawLeft(world, block, lbCorner, finCorner);
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    public static int spawnGasBlock(World world, BlockPos pos, BlockState block){
+        world.setBlockState(pos, block);
+        return 0;
+    }
+
+    public static void spawnGasTower(World world, BlockPos pos, BlockState block){
+        int y = 0;
+        while(y<255){
+            //System.out.println(y);
+            //System.out.println(pos.getY());
+
+            if(world.getBlockState(pos).getMaterial() == Material.AIR || world.getBlockState(pos).getMaterial() == Material.GLASS){
+                //System.out.println("Placing block...");
+                world.setBlockState(pos, block);
+            }
+            pos = pos.add(0, 1, 0);
+            y+=1;
+        }
     }
 
 }
