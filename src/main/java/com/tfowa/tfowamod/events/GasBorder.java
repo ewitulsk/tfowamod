@@ -26,10 +26,10 @@ import java.util.*;
 
 //This is a Point Class, just named Pt, cus idk how java handles multiples.
 class Pt{
-    public double x;
-    public double y;
+    public int x;
+    public int y;
 
-    public Pt(double x, double y){
+    public Pt(int x, int y){
        this.x = x;
        this.y = y;
     }
@@ -177,31 +177,90 @@ class BorderHandler{
     public static boolean rOn = false;
     public static boolean lOn = false;
 
-    public static Border mainBorder = new Border(new Pt(0, 0), 10);
+    public static Border mainBorder = new Border(new Pt(0, 0), 100);
+    public static Border newBorder;
+    public static Border tempBorder;
 
-    /*
-    public static Border makeNewBorder(double decreasePercent){
+    public static Pt randPoint(Pt p1, Pt p2){
+        try{
+            Random r = new Random();
+            ArrayList<Integer> pointsArr = new ArrayList<Integer>();
+            pointsArr.add(p1.x);
+            pointsArr.add(p2.x);
+            pointsArr.add(p1.y);
+            pointsArr.add(p2.y);
+            int min = Collections.min(pointsArr);
+            min = Math.abs(min) * 2;
+            p1.x += min;
+            p2.x += min;
+            p1.y += min;
+            p2.y += min;
+
+            int xMin;
+            int xMax;
+            int yMin;
+            int yMax;
+            ArrayList<Integer> xArr = new ArrayList<Integer>();
+            xArr.add(p1.x);
+            xArr.add(p2.x);
+            System.out.println("xArr: " + xArr);
+            Collections.sort(xArr);
+            System.out.println("PostSort xArr: " + xArr);
+            xMin = xArr.get(0);
+            xMax = xArr.get(1);
+            int xRand = r.nextInt((xMax - xMin) + 1) + min;
+
+            ArrayList<Integer> yArr = new ArrayList<Integer>();
+            yArr.add(p1.y);
+            yArr.add(p2.y);
+            System.out.println("yArr: " + yArr);
+            Collections.sort(yArr);
+            System.out.println("PostSort yArr: " + yArr);
+            yMin = yArr.get(0);
+            yMax = yArr.get(1);
+
+            int yRand = r.nextInt((yMax - yMin) + 1) + min;
+
+            return new Pt(xRand-min, yRand-min);
+        } catch (Exception e){
+            e.printStackTrace();
+            return new Pt(0, 0);
+        }
+
+    }
+
+
+    public static int makeNewBorder(double decreasePercent){
         Random r = new Random();
 
         Line tempLine;
         int tempRad = (int) (mainBorder.radius * decreasePercent);
-        Border tempBorder = new Border(mainBorder.center, tempRad);
+        int newRad = mainBorder.radius - tempRad;
+        tempBorder = new Border(mainBorder.center, tempRad);
 
         //Pick random side of temp border
         int side = r.nextInt(4 );
         if (side == 0){
-            tempLine = mainBorder.top;
+            tempLine = tempBorder.top;
         } else if (side == 1){
-            tempLine = mainBorder.right;
+            tempLine = tempBorder.right;
         } else if (side == 2){
-            tempLine = mainBorder.bottom;
+            tempLine = tempBorder.bottom;
         }else if (side == 3){
-            tempLine = mainBorder.left;
+            tempLine = tempBorder.left;
+        }else{
+            tempLine = new Line(new Pt(0, 0), new Pt(0, 0));
         }
 
+        //System.out.println("PT1X: " + tempLine.corner1.x + " PT1Y: " + tempLine.corner1.y + " PT2X: " + tempLine.corner2.x + " PT2Y: " + tempLine.corner2.y);
+        Pt randPt = randPoint(tempLine.corner1, tempLine.corner2);
 
+        System.out.println("RX: " + randPt.x + " RY: " + randPt.y);
 
-    }*/
+        newBorder = new Border(randPt, newRad);
+
+        return 0;
+    }
 
 
     //Close seconds is an integer amount of time for the Border to close in Seconds
@@ -340,13 +399,13 @@ public class GasBorder {
 
 
         //New Border centered at 0,0 with Radius of 10
-        d.register(Commands.literal("newBorder").requires(source -> {
+        d.register(Commands.literal("drawBorder").requires(source -> {
             try{
                 return source.asPlayer() != null;
             } catch (CommandSyntaxException e) {
                 return false;
             }
-        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), ModBlocks.GAS_BLOCK.get().getDefaultState(), new Border(new Pt(0,0), 10))));
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), ModBlocks.GAS_BLOCK.get().getDefaultState(), BorderHandler.mainBorder)));
 
         d.register(Commands.literal("clearBorder").requires(source -> {
             try{
@@ -354,7 +413,65 @@ public class GasBorder {
             } catch (CommandSyntaxException e) {
                 return false;
             }
-        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), Blocks.AIR.getDefaultState(), new Border(new Pt(0,0), 10))));
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), Blocks.AIR.getDefaultState(), BorderHandler.mainBorder)));
+
+        d.register(Commands.literal("pickNewBorder").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> BorderHandler.makeNewBorder(.2)));
+
+        d.register(Commands.literal("drawNewBorder").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), ModBlocks.GAS_BLOCK.get().getDefaultState(), BorderHandler.newBorder)));
+
+        d.register(Commands.literal("clearNewBorder").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), Blocks.AIR.getDefaultState(), BorderHandler.newBorder)));
+
+        d.register(Commands.literal("drawTempBorder").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), Blocks.COBBLESTONE.getDefaultState(), BorderHandler.tempBorder)));
+
+        d.register(Commands.literal("clearTempBorder").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), Blocks.AIR.getDefaultState(), BorderHandler.tempBorder)));
+
+        d.register(Commands.literal("drawBorderCenter").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> GasBorder.spawnTower(command.getSource().getWorld(), new BlockPos(BorderHandler.mainBorder.center.x, 0, BorderHandler.mainBorder.center.y), Blocks.DIAMOND_BLOCK.getDefaultState(), true)));
+
+        d.register(Commands.literal("drawNewBorderCenter").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> GasBorder.spawnTower(command.getSource().getWorld(), new BlockPos(BorderHandler.newBorder.center.x, 0, BorderHandler.newBorder.center.y), Blocks.GOLD_BLOCK.getDefaultState(), true)));
+
+
     }
 
     public static float GAS_DAMAGE_TO_PLAYER = 1f;
@@ -389,7 +506,7 @@ public class GasBorder {
             //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
             //System.out.println("ltCorner: "+ ltCorner.x + ", "+ltCorner.y);
             //System.out.println("finCorner: "+finCorner.x + ", " + finCorner.y);
-            spawnGasTower(world, curPos, block);
+            spawnTower(world, curPos, block, false);
             //Increment curPos.x and curPt.x
             curPos = curPos.add(1,0,0);
             curPt.x += 1;
@@ -402,7 +519,7 @@ public class GasBorder {
         BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
         while(!curPt.equals(rbCorner)){
             //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
-            spawnGasTower(world, curPos, block);
+            spawnTower(world, curPos, block, false);
             //Decrement curPos.y and curPt.y
             curPos = curPos.add(0,0,-1);
             curPt.y -= 1;
@@ -415,7 +532,7 @@ public class GasBorder {
         BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
         while(!curPt.equals(lbCorner)){
             //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
-            spawnGasTower(world, curPos, block);
+            spawnTower(world, curPos, block, false);
             //Decrement curPos.x and curPt.x
             curPos = curPos.add(-1,0,0);
             curPt.x -= 1;
@@ -428,7 +545,7 @@ public class GasBorder {
         BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
         while(!curPt.equals(finCorner)){
             //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
-            spawnGasTower(world, curPos, block);
+            spawnTower(world, curPos, block, false);
             //Increment curPos.y and curPt.y
             curPos = curPos.add(0,0,1);
             curPt.y += 1;
@@ -438,6 +555,7 @@ public class GasBorder {
 
     public static int drawWall(World world, BlockState block, Border  border){
         try {
+            border = new Border(border.center, border.radius);
             ArrayList corners = border.corners;
             Pt ltCorner = (Pt) corners.get(0);
             Pt rtCorner = (Pt) corners.get(1);
@@ -457,24 +575,25 @@ public class GasBorder {
         return 0;
     }
 
-    public static int spawnGasBlock(World world, BlockPos pos, BlockState block){
+    public static int spawnBlock(World world, BlockPos pos, BlockState block){
         world.setBlockState(pos, block);
         return 0;
     }
 
-    public static void spawnGasTower(World world, BlockPos pos, BlockState block){
+    public static int spawnTower(World world, BlockPos pos, BlockState block, boolean repBlocks){
         int y = 0;
-        while(y<255){
+        while(y<10){
             //System.out.println(y);
             //System.out.println(pos.getY());
 
-            if(world.getBlockState(pos).getMaterial() == Material.AIR || world.getBlockState(pos).getMaterial() == Material.GLASS){
+            if(world.getBlockState(pos).getMaterial() == Material.AIR || world.getBlockState(pos).getMaterial() == Material.GLASS || repBlocks){
                 //System.out.println("Placing block...");
                 world.setBlockState(pos, block);
             }
             pos = pos.add(0, 1, 0);
             y+=1;
         }
+        return 0;
     }
 
 }
