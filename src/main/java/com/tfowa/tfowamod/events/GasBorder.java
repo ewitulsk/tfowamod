@@ -19,6 +19,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.*;
 
@@ -167,10 +168,10 @@ class BorderHandler{
     public static int ltickCounter = 0;
     public static int rtickCounter = 0;
 
-    public static int ttickRate = 0; //TickRate per 20 ticks
-    public static int btickRate = 0;
-    public static int ltickRate = 0;
-    public static int rtickRate = 0;
+    public static double ttickRate = 0; //TickRate per 20 ticks
+    public static double btickRate = 0;
+    public static double ltickRate = 0;
+    public static double rtickRate = 0;
 
     public static boolean tOn = false;
     public static boolean bOn = false;
@@ -181,9 +182,9 @@ class BorderHandler{
     public static Border newBorder;
     public static Border tempBorder;
 
-    public static Pt randPoint(Pt p1, Pt p2){
-        try{
-            Random r = new Random();
+    /*
+    *
+    * Random r = new Random();
             ArrayList<Integer> pointsArr = new ArrayList<Integer>();
             pointsArr.add(p1.x);
             pointsArr.add(p2.x);
@@ -221,7 +222,45 @@ class BorderHandler{
 
             int yRand = r.nextInt((yMax - yMin) + 1) + min;
 
-            return new Pt(xRand-min, yRand-min);
+            return new Pt(xRand-min, yRand-min);*/
+
+
+    public static Pt randPoint(Pt p1, Pt p2){
+        int xOffset = 0;
+        int yOffset = 0;
+        int xMin = 0;
+        int xMax = 0;
+        int yMin = 0;
+        int yMax = 0;
+        try{
+
+            Random r = new Random();
+            if(p1.x < p2.x){
+                xOffset = Math.abs(p1.x) * 2;
+                xMin = xOffset + p1.x;
+                xMax = xOffset + p2.x;
+            }
+            if(p2.x < p1.x){
+                xOffset = Math.abs(p2.x) * 2;
+                xMin = xOffset + p2.x;
+                xMax = xOffset + p1.x;
+            }
+            if(p1.y < p2.y){
+                yOffset = Math.abs(p1.y) * 2;
+                yMin = yOffset + p1.y;
+                yMax = yOffset + p2.y;
+            }
+            if(p2.y < p1.y){
+                yOffset = Math.abs(p2.y) * 2;
+                yMin = yOffset + p2.y;
+                yMax = yOffset + p1.y;
+            }
+
+            int xRand = (r.nextInt((xMax - xMin) + 1) + xMin)-xOffset;
+            int yRand = (r.nextInt((yMax - yMin) + 1) + yMin)-yOffset;
+
+            return new Pt(xRand, yRand);
+
         } catch (Exception e){
             e.printStackTrace();
             return new Pt(0, 0);
@@ -240,14 +279,19 @@ class BorderHandler{
 
         //Pick random side of temp border
         int side = r.nextInt(4 );
+        System.out.println("Side: " + side);
         if (side == 0){
             tempLine = tempBorder.top;
+            System.out.println("Top");
         } else if (side == 1){
             tempLine = tempBorder.right;
+            System.out.println("Right");
         } else if (side == 2){
             tempLine = tempBorder.bottom;
+            System.out.println("Bottom");
         }else if (side == 3){
             tempLine = tempBorder.left;
+            System.out.println("Left");
         }else{
             tempLine = new Line(new Pt(0, 0), new Pt(0, 0));
         }
@@ -262,9 +306,14 @@ class BorderHandler{
         return 0;
     }
 
+    public static int setMainToNew(){
+        mainBorder = newBorder;
+        return 0;
+    }
+
 
     //Close seconds is an integer amount of time for the Border to close in Seconds
-    public static void calcTickRates(Border newBorder, int closeSeconds){
+    public static void calcTickRates(int closeSeconds){
         //Top
         double mainTop = mainBorder.top.corner1.y;
         double newTop = newBorder.top.corner1.y;
@@ -282,53 +331,134 @@ class BorderHandler{
         double newRight = newBorder.right.corner1.y;
         double rightDiff = mainRight - newRight;
 
-        ttickRate = (int)(closeSeconds/topDiff) * 20; // Ticks per Block
-        btickRate = (int)(closeSeconds/bottomDiff) * 20;
-        ltickRate = (int)(closeSeconds/leftDiff) * 20;
-        rtickRate = (int)(closeSeconds/rightDiff) * 20;
+        System.out.println("Close Seconds: " + closeSeconds);
+        System.out.println("mainTop: " + mainTop);
+        System.out.println("newTop: " + newTop);
+        System.out.println("topDiff: " + topDiff);
 
+        ttickRate = (int) Math.abs((closeSeconds/topDiff) * 200); // Ticks per Block
+        btickRate = (int) Math.abs((closeSeconds/bottomDiff) * 200);
+        ltickRate = (int) Math.abs((closeSeconds/leftDiff) * 200);
+        rtickRate = (int) Math.abs((closeSeconds/rightDiff) * 200);
+
+        System.out.println("ttickRate: " + ttickRate);
+        System.out.println("btickRate: " + btickRate);
+        System.out.println("ltickRate: " + ltickRate);
+        System.out.println("rtickRate: " + rtickRate);
+
+    }
+
+    public static void allSidesOn(){
+        tOn = true;
+        bOn = true;
+        rOn = true;
+        lOn = true;
+        System.out.println("All Sides On!!!");
+    }
+
+    public static int moveBorder(World world, double decreasePercent){
+        GasBorder.drawWall(world, ModBlocks.GAS_BLOCK.get().getDefaultState(), mainBorder);
+        if(newBorder == null){
+            makeNewBorder(decreasePercent);
+        }
+        calcTickRates(30);
+        allSidesOn();
+        return 0;
     }
 
 
 
     @SubscribeEvent
-    public static void shrinkTopEdge(TickEvent.ServerTickEvent event){
+    public static void shrinkTopEdge(TickEvent.WorldTickEvent event){
+        //System.out.println("tTick Counter: " + ttickCounter + " tTick Goal: " + ttickRate);
+        if(newBorder != null) {
+            if (tOn && ttickCounter % ttickRate == 0) {
+                //System.out.println("Moving Top!!!");
+                GasBorder.drawTop(event.world, Blocks.AIR.getDefaultState(), mainBorder.ltCorner, mainBorder.rtCorner);
+                //System.out.println("ltCornerX: " + mainBorder.ltCorner.x + " ltCornerY: " + mainBorder.ltCorner.y + " rtCornerX: " + mainBorder.rtCorner.x + " rtCornerY: " + mainBorder.rtCorner.y);
+                mainBorder.shrinkTopByOne();
+                //System.out.println("ltCornerX: " + mainBorder.ltCorner.x + " ltCornerY: " + mainBorder.ltCorner.y + " rtCornerX: " + mainBorder.rtCorner.x + " rtCornerY: " + mainBorder.rtCorner.y);
+                GasBorder.drawTop(event.world, ModBlocks.GAS_BLOCK.get().getDefaultState(), mainBorder.ltCorner, mainBorder.rtCorner);
+                ttickCounter = 0;
+            }
 
-        if(tOn && ttickCounter == ttickRate){
-            mainBorder.shrinkTopByOne();
-            ttickCounter = 0;
+            if (mainBorder.checkTopEq(newBorder)) {
+                //System.out.println("Top Off!");
+                tOn = false;
+            }
+            if (tOn) {
+                ttickCounter += 1;
+            }
         }
-        ttickCounter += 1;
     }
 
     @SubscribeEvent
-    public static void shrinkBottomEdge(TickEvent.ServerTickEvent event){
-
-        if(bOn && btickCounter == btickRate){
-            mainBorder.shrinkTopByOne();
-            btickCounter = 0;
+    public static void shrinkBottomEdge(TickEvent.WorldTickEvent event){
+        if(newBorder != null) {
+            if (bOn && btickCounter % btickRate == 0) {
+                GasBorder.drawTop(event.world, Blocks.AIR.getDefaultState(), mainBorder.lbCorner, mainBorder.rbCorner);
+                mainBorder.shrinkBottomByOne();
+                GasBorder.drawTop(event.world, ModBlocks.GAS_BLOCK.get().getDefaultState(), mainBorder.lbCorner, mainBorder.rbCorner);
+                btickCounter = 0;
+            }
+            if (mainBorder.checkBottomEq(newBorder)) {
+                bOn = false;
+            }
+            if (bOn) {
+                btickCounter += 1;
+            }
         }
-        btickCounter += 1;
     }
 
     @SubscribeEvent
-    public static void shrinkLeftEdge(TickEvent.ServerTickEvent event){
-
-        if(lOn && ltickCounter == ltickRate){
-            mainBorder.shrinkTopByOne();
-            ltickCounter = 0;
+    public static void shrinkLeftEdge(TickEvent.WorldTickEvent event){
+        if(newBorder != null) {
+            //System.out.println("I entered shrink left");
+            if (lOn && ltickCounter % ltickRate == 0) {
+                System.out.println("I tried to remove the gas blocks");
+                GasBorder.drawLeft(event.world, Blocks.AIR.getDefaultState(), mainBorder.lbCorner, mainBorder.ltCorner);
+                System.out.println("I successfully removed the gas blocks and am trying to shrink the border.");
+                mainBorder.shrinkLeftByOne();
+                System.out.println("I shrunk the border and am trying to draw the gas blocks");
+                GasBorder.drawLeft(event.world, ModBlocks.GAS_BLOCK.get().getDefaultState(), mainBorder.lbCorner, mainBorder.ltCorner);
+                System.out.println("I drew the gas blocks.");
+                ltickCounter = 0;
+                System.out.println("I reset counter to zero.");
+            }
+            if (mainBorder.checkLeftEq(newBorder)) {
+                lOn = false;
+            }
+            if (lOn) {
+                ltickCounter += 1;
+            }
         }
-        ltickCounter += 1;
     }
 
     @SubscribeEvent
-    public static void shrinkRightEdge(TickEvent.ServerTickEvent event){
-
-        if(rOn && rtickCounter == rtickRate){
-            mainBorder.shrinkTopByOne();
-            rtickCounter = 0;
+    public static void shrinkRightEdge(TickEvent.WorldTickEvent event){
+        if(newBorder != null) {
+            if (rOn && rtickCounter % rtickRate == 0) {
+                GasBorder.drawRight(event.world, Blocks.AIR.getDefaultState(), mainBorder.rtCorner, mainBorder.rbCorner);
+                mainBorder.shrinkRightByOne();
+                GasBorder.drawRight(event.world, ModBlocks.GAS_BLOCK.get().getDefaultState(), mainBorder.rtCorner, mainBorder.rbCorner);
+                rtickCounter = 0;
+            }
+            if (mainBorder.checkRightEq(newBorder)) {
+                rOn = false;
+            }
+            if (rOn) {
+                rtickCounter += 1;
+            }
         }
-        rtickCounter += 1;
+    }
+
+    @SubscribeEvent
+    public static void checkBorderEquals(TickEvent.ServerTickEvent event){
+        if(newBorder != null){
+            if(mainBorder == newBorder){
+                mainBorder = newBorder;
+            }
+        }
     }
 
 
@@ -429,7 +559,7 @@ public class GasBorder {
             } catch (CommandSyntaxException e) {
                 return false;
             }
-        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), ModBlocks.GAS_BLOCK.get().getDefaultState(), BorderHandler.newBorder)));
+        }).executes(command -> GasBorder.drawWall(command.getSource().getWorld(), Blocks.GLASS.getDefaultState(), BorderHandler.newBorder)));
 
         d.register(Commands.literal("clearNewBorder").requires(source -> {
             try{
@@ -471,6 +601,21 @@ public class GasBorder {
             }
         }).executes(command -> GasBorder.spawnTower(command.getSource().getWorld(), new BlockPos(BorderHandler.newBorder.center.x, 0, BorderHandler.newBorder.center.y), Blocks.GOLD_BLOCK.getDefaultState(), true)));
 
+        d.register(Commands.literal("setMainToNew").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> BorderHandler.setMainToNew()));
+
+        d.register(Commands.literal("moveBorder").requires(source -> {
+            try{
+                return source.asPlayer() != null;
+            } catch (CommandSyntaxException e) {
+                return false;
+            }
+        }).executes(command -> BorderHandler.moveBorder(command.getSource().getWorld(), 20)));
 
     }
 
@@ -500,6 +645,8 @@ public class GasBorder {
 
     public static void drawTop(World world, BlockState block, Pt ltCorner, Pt rtCorner){
         //System.out.println("First Wall");
+        ltCorner = new Pt(ltCorner.x, ltCorner.y);
+        rtCorner = new Pt(rtCorner.x, rtCorner.y);
         Pt curPt = ltCorner;
         BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
         while(!curPt.equals(rtCorner)){
@@ -515,6 +662,8 @@ public class GasBorder {
 
     public static void drawRight(World world, BlockState block, Pt rtCorner, Pt rbCorner){
         //System.out.println("Second Wall");
+        rbCorner = new Pt(rbCorner.x, rbCorner.y);
+        rtCorner = new Pt(rtCorner.x, rtCorner.y);
         Pt curPt = rtCorner;
         BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
         while(!curPt.equals(rbCorner)){
@@ -528,6 +677,8 @@ public class GasBorder {
 
     public static void drawBottom(World world, BlockState block, Pt rbCorner, Pt lbCorner){
         //System.out.println("Third Wall");
+        rbCorner = new Pt(rbCorner.x, rbCorner.y);
+        lbCorner = new Pt(lbCorner.x, lbCorner.y);
         Pt curPt = rbCorner;
         BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
         while(!curPt.equals(lbCorner)){
@@ -540,13 +691,17 @@ public class GasBorder {
     }
 
     public static void drawLeft(World world, BlockState block, Pt lbCorner, Pt finCorner){
-        //System.out.println("Forth Wall");
+        //System.out.println("Second Wall");
+        lbCorner = new Pt(lbCorner.x, lbCorner.y);
+        finCorner = new Pt(finCorner.x, finCorner.y);
         Pt curPt = lbCorner;
         BlockPos curPos = new BlockPos( (int)curPt.x, 0, (int)curPt.y);
+        System.out.println("GoalPtX: "+ finCorner.x + " GoalPtY: " + finCorner.y);
         while(!curPt.equals(finCorner)){
+            System.out.println("curPtX: " + curPt.x + " curPtY: "+ curPt.y);
             //System.out.println("Drawing Border at " + curPos.getX() + ", " + curPos.getY() + ", " + curPos.getZ());
             spawnTower(world, curPos, block, false);
-            //Increment curPos.y and curPt.y
+            //Decrement curPos.y and curPt.y
             curPos = curPos.add(0,0,1);
             curPt.y += 1;
         }
